@@ -30,28 +30,23 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
       - name: Install Rust toolchain
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
       - name: Install dependencies
         run: |
           python -m venv .venv
           . .venv/bin/activate
           pip install maturin pytest
-
       - name: Rust checks
         run: |
           cargo fmt --check
           cargo clippy -- -D warnings
-
       - name: Build and install
         run: |
           . .venv/bin/activate
           maturin develop
-
       - name: Run Python tests
         run: |
           . .venv/bin/activate
@@ -67,20 +62,36 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
       - name: Install Rust toolchain
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
         shell: bash
-
       - name: Install maturin
         run: pip install maturin
-
       - name: Build wheel
         run: maturin build --release --out dist
-
       - uses: actions/upload-artifact@v4
         with:
           name: wheel-${{ matrix.os }}
+          path: dist/
+
+  build-wheel-musl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Rust toolchain
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - name: Install maturin
+        run: pip install maturin
+      - name: Build musllinux wheel
+        run: maturin build --release --out dist --compatibility musllinux_1_2
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheel-musllinux
           path: dist/
