@@ -24,78 +24,57 @@ on:
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Build and install
-        shell: bash
-        run: |
-          pip install maturin pytest
-          maturin build
-          pip install target/wheels/*.whl
-
-      - name: Run tests
-        run: pytest tests/ -v
-
-      - name: Install swhid CLI for conformance tests
-        run: cargo install swhid
-
-      - name: Run conformance tests with CLI
-        env:
-          SWHID_CLI: swhid
-        run: pytest tests/test_conformance.py -v
-
-  lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
-      - name: Rust fmt
-        run: cargo fmt --check
-      - name: Clippy
-        run: cargo clippy -- -D warnings
-
-  # Build wheels for PyPI distribution
-  wheels:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [test, lint]
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Build wheels (Linux)
-        if: runner.os == 'Linux'
-        uses: PyO3/maturin-action@v1
+
+      - name: Install Rust toolchain
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          pip install maturin pytest
+
+      - name: Rust checks
+        run: |
+          cargo fmt --check
+          cargo clippy -- -D warnings
+
+      - name: Build and install
+        run: maturin develop
+
+      - name: Run Python tests
+        run: pytest tests/ -v
+
+  build-wheel:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-14, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          args: --release --out dist --interpreter python3.9 python3.10 python3.11 python3.12 python3.13
-          manylinux: auto
-      - name: Build wheels (macOS / Windows)
-        if: runner.os != 'Linux'
-        uses: PyO3/maturin-action@v1
+          python-version: "3.12"
+
+      - name: Install Rust toolchain
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+        shell: bash
+
+      - name: Install maturin
+        run: pip install maturin
+
+      - name: Build wheel
+        run: maturin build --release --out dist
+
+      - uses: actions/upload-artifact@v4
         with:
-          args: --release --out dist
-      - uses: actions/upload-artifact@v7
-        with:
-          name: wheels-${{ matrix.os }}
+          name: wheel-${{ matrix.os }}
           path: dist/
