@@ -42,7 +42,8 @@ impl HeaderWriter {
 
 /// Build a SWHID-format signature tuple from raw parts.
 ///
-/// Used by both `git` (libgit2) and `git_gix` (gitoxide) backends.
+/// Used by the `git` (libgit2) backend.
+#[cfg(feature = "git")]
 pub(crate) fn build_signature(
     name: &[u8],
     email: &[u8],

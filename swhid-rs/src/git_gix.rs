@@ -100,10 +100,23 @@ fn directory_swhid_from_tree(
     Ok(hash_swhid_object("tree", &manifest))
 }
 
-/// Parse a gitoxide actor signature into (fullname, timestamp, offset).
-fn parse_gix_signature(sig: gix::actor::SignatureRef<'_>) -> (Bytestring, i64, Bytestring) {
-    // sig.time is a raw string like "1763027354 +0100"
-    let time_str = sig.time.trim();
+/// Parse a raw git signature bytestring into (fullname, timestamp, offset).
+///
+/// Raw format: `Name <email> timestamp +offset`
+/// In gix 0.83+, commit_ref.author/committer are raw `&BStr`.
+fn parse_gix_signature(raw: &[u8]) -> (Bytestring, i64, Bytestring) {
+    // Find the closing '>' of the email — everything before (inclusive) is the fullname
+    let gt_pos = raw.iter().rposition(|&b| b == b'>').unwrap_or(raw.len());
+    let full_name = raw[..=gt_pos].to_vec();
+
+    // Everything after '> ' is "timestamp +offset"
+    let time_part = if gt_pos + 2 < raw.len() {
+        &raw[gt_pos + 2..]
+    } else {
+        b"0 +0000"
+    };
+
+    let time_str = std::str::from_utf8(time_part).unwrap_or("0 +0000").trim();
     let (timestamp, offset) = if let Some(space_pos) = time_str.rfind(' ') {
         let ts_str = &time_str[..space_pos];
         let tz_str = &time_str[space_pos + 1..];
@@ -113,7 +126,7 @@ fn parse_gix_signature(sig: gix::actor::SignatureRef<'_>) -> (Bytestring, i64, B
         (time_str.parse::<i64>().unwrap_or(0), "+0000".to_string())
     };
 
-    crate::utils::build_signature(sig.name.as_ref(), sig.email.as_ref(), timestamp, &offset)
+    (full_name.into(), timestamp, offset.into_bytes().into())
 }
 
 /// Returns key-value pairs from a raw commit/tag header
@@ -200,9 +213,9 @@ pub fn revision_from_git(
         .collect::<Result<Vec<_>, SwhidError>>()?;
 
     let (author, author_timestamp, author_timestamp_offset) =
-        parse_gix_signature(commit_ref.author);
+        parse_gix_signature(commit_ref.author.as_ref());
     let (committer, committer_timestamp, committer_timestamp_offset) =
-        parse_gix_signature(commit_ref.committer);
+        parse_gix_signature(commit_ref.committer.as_ref());
 
     // Parse extra headers from raw commit data
     let raw_data: &[u8] = commit.data.as_ref();
@@ -273,7 +286,7 @@ pub fn release_from_git(repo: &gix::Repository, tag_oid: &ObjectId) -> Result<Re
 
     let (author, author_timestamp, author_timestamp_offset) = match tag_ref.tagger {
         Some(tagger) => {
-            let (a, t, o) = parse_gix_signature(tagger);
+            let (a, t, o) = parse_gix_signature(tagger.as_ref());
             (Some(a), Some(t), Some(o))
         }
         None => (None, None, None),
