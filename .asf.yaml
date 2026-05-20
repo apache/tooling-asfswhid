@@ -33,7 +33,6 @@ github:
         - id: alitheg
           type: User
       wait_timer: 5
-      prevent_self_review: true
       deployment_branch_policy:
         protected_branches: false
         policies:
