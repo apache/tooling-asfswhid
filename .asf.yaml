@@ -21,6 +21,24 @@ github:
     catchall: "[GH] {title} ({repository})"
   protected_branches:
     main: {}
+  environments:
+    pypi:
+      required_reviewers:
+        - id: andrewmusselman
+          type: User
+        - id: sbp
+          type: User
+        - id: dave2wave
+          type: User
+        - id: alitheg
+          type: User
+      wait_timer: 5
+      prevent_self_review: true
+      deployment_branch_policy:
+        protected_branches: false
+        policies:
+          - name: "v*"
+            type: tag
 
 notifications:
   commits:      commits@tooling.apache.org
