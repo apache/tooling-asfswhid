@@ -22,9 +22,9 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/apache/asfswhid"
-Repository = "https://github.com/apache/asfswhid"
-Issues = "https://github.com/apache/asfswhid/issues"
+Homepage = "https://github.com/apache/tooling-asfswhid"
+Repository = "https://github.com/apache/tooling-asfswhid"
+Issues = "https://github.com/apache/tooling-asfswhid/issues"
 
 [tool.maturin]
 features = ["pyo3/extension-module", "gitoxide"]
