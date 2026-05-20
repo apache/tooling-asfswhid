@@ -38,6 +38,8 @@ jobs:
 
       - name: Install dependencies
         run: |
+          python -m venv .venv
+          . .venv/bin/activate
           pip install maturin pytest
 
       - name: Rust checks
@@ -46,10 +48,14 @@ jobs:
           cargo clippy -- -D warnings
 
       - name: Build and install
-        run: maturin develop
+        run: |
+          . .venv/bin/activate
+          maturin develop
 
       - name: Run Python tests
-        run: pytest tests/ -v
+        run: |
+          . .venv/bin/activate
+          pytest tests/ -v
 
   build-wheel:
     runs-on: ${{ matrix.os }}
