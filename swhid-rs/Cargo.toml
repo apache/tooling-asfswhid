@@ -22,7 +22,7 @@ serde = { version = "1", features = ["derive"], optional = true }
 clap = { version = "4", features = ["derive"] }
 sha1collisiondetection = { version = "0.3" }
 git2 = { version = "0.20", optional = true }
-gix = { version = "0.72", optional = true, default-features = false, features = ["max-performance-safe", "index"] }
+gix = { version = "0.83", optional = true, default-features = false, features = ["max-performance-safe", "index"] }
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
