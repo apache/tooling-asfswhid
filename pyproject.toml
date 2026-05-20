@@ -1,0 +1,32 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "asfswhid"
+version = "0.1.0"
+description = "Python bindings for the swhid-rs SWHID v1.2 reference implementation (ISO/IEC 18670:2025)"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.9"
+keywords = ["swhid", "software-heritage", "hash", "identifier", "iso18670"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Rust",
+    "Topic :: Security :: Cryptography",
+    "Topic :: Software Development :: Version Control",
+]
+
+[project.urls]
+Homepage = "https://github.com/apache/asfswhid"
+Repository = "https://github.com/apache/asfswhid"
+Issues = "https://github.com/apache/asfswhid/issues"
+
+[tool.maturin]
+features = ["pyo3/extension-module", "gitoxide"]
+python-source = "python"
+module-name = "asfswhid.asfswhid"
