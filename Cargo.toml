@@ -11,7 +11,7 @@ name = "asfswhid"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.23", features = ["extension-module"] }
+pyo3 = { version = "0.24", features = ["extension-module"] }
 swhid = { path = "swhid-rs", features = ["gitoxide"] }
 # Needed for ObjectId type in revision/release functions
 gix = { version = "0.83", optional = true, default-features = false, features = ["sha1"] }
