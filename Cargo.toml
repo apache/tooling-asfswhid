@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0"
 description = "Python bindings for the swhid-rs SWHID v1.2 reference implementation"
-repository = "https://github.com/apache/asfswhid"
+repository = "https://github.com/apache/tooling-asfswhid"
 
 [lib]
 name = "asfswhid"
@@ -12,9 +12,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 pyo3 = { version = "0.23", features = ["extension-module"] }
-# Once the gitoxide PR is merged upstream, switch to the crates.io release:
-# swhid = { version = "0.3", features = ["gitoxide"] }
-swhid = { git = "https://github.com/andrewmusselman/swhid-rs", branch = "gitoxide-feature-43" }
+swhid = { path = "swhid-rs", features = ["gitoxide"] }
 # Needed for ObjectId type in revision/release functions
 gix = { version = "0.72", optional = true, default-features = false }
 

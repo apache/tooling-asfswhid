@@ -92,6 +92,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
 
 [[package]]
+name = "asfswhid"
+version = "0.1.0"
+dependencies = [
+ "gix",
+ "pyo3",
+ "swhid",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1677,7 +1686,6 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 [[package]]
 name = "swhid"
 version = "0.2.2"
-source = "git+https://github.com/andrewmusselman/swhid-rs?branch=gitoxide-feature-43#8414cdff71a48fc760697704241fec3910d3b068"
 dependencies = [
  "clap",
  "git2",
@@ -1686,15 +1694,6 @@ dependencies = [
  "percent-encoding",
  "sha1collisiondetection",
  "thiserror 1.0.69",
-]
-
-[[package]]
-name = "swhid-py"
-version = "0.1.0"
-dependencies = [
- "gix",
- "pyo3",
- "swhid",
 ]
 
 [[package]]

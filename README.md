@@ -26,13 +26,13 @@ VCS integration (revision, release, snapshot) uses [gitoxide](https://github.com
 ### From PyPI (once published)
 
 ```bash
-uv pip install asfswhid
+pip install asfswhid
 ```
 
 ### From Git
 
 ```bash
-uv pip install git+https://github.com/apache/asfswhid.git
+pip install git+https://github.com/apache/tooling-asfswhid.git
 ```
 
 This requires the Rust toolchain to be installed. If you don't have it:
@@ -44,8 +44,8 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ### From source
 
 ```bash
-git clone https://github.com/apache/asfswhid.git
-cd asfswhid
+git clone https://github.com/apache/tooling-asfswhid.git
+cd tooling-asfswhid
 uv venv && source .venv/bin/activate
 uv pip install maturin
 maturin develop          # dev install into current venv
@@ -114,13 +114,13 @@ These functions use [gitoxide](https://github.com/GitoxideLabs/gitoxide) (MIT/Ap
 Add to your `requirements.txt`:
 
 ```
-asfswhid @ git+https://github.com/apache/asfswhid.git
+asfswhid @ git+https://github.com/apache/tooling-asfswhid.git
 ```
 
 Or pin to a specific release tag:
 
 ```
-asfswhid @ git+https://github.com/apache/asfswhid.git@v0.1.0
+asfswhid @ git+https://github.com/apache/tooling-asfswhid.git@v0.1.0
 ```
 
 Then install with `uv pip install -r requirements.txt` (or `pip install -r requirements.txt`).
@@ -130,7 +130,7 @@ Then install with `uv pip install -r requirements.txt` (or `pip install -r requi
 ```toml
 [project]
 dependencies = [
-    "asfswhid @ git+https://github.com/apache/asfswhid.git",
+    "asfswhid @ git+https://github.com/apache/tooling-asfswhid.git",
 ]
 ```
 
@@ -142,8 +142,6 @@ dependencies = [
     "asfswhid>=0.1.0",
 ]
 ```
-
-Then `uv pip install .` or `uv sync` to pull it in.
 
 ### Calling from your code
 
@@ -343,7 +341,7 @@ ObjectType.Revision
 
 ## ATR use-cases
 
-This package supports two key use-cases for [Apache Trusted Releases](https://github.com/apache/tooling-trusted-releases):
+This package supports key use-cases for [Apache Trusted Releases](https://github.com/apache/tooling-trusted-releases):
 
 ### Cross-format archive comparison
 
@@ -388,16 +386,19 @@ SWHID_CLI=swhid pytest tests/test_conformance.py -v
 
 ```bash
 # Prerequisites: Rust toolchain, Python 3.9+, uv
-git clone https://github.com/apache/asfswhid.git
-cd asfswhid
+git clone https://github.com/apache/tooling-asfswhid.git
+cd tooling-asfswhid
 uv venv && source .venv/bin/activate
 uv pip install maturin pytest
 
 # Build + install in dev mode
 maturin develop
 
-# Run tests
+# Run Python tests
 pytest tests/ -v
+
+# Run Rust tests on the forked crate
+cargo test --manifest-path swhid-rs/Cargo.toml --features gitoxide
 
 # Build release wheel
 maturin build --release
@@ -410,8 +411,8 @@ cargo clippy -- -D warnings
 ## Architecture
 
 ```
-asfswhid/
-├── Cargo.toml                  # Rust dependencies (swhid + pyo3)
+tooling-asfswhid/
+├── Cargo.toml                  # Bindings crate (path dep on swhid-rs/)
 ├── pyproject.toml              # Python package metadata (maturin build)
 ├── example_usage.py            # Runnable demo with expected outputs
 ├── src/
@@ -420,15 +421,57 @@ asfswhid/
 │   └── asfswhid/
 │       ├── __init__.py         # Re-exports from native module
 │       └── __init__.pyi        # Type stubs for IDE support
+├── swhid-rs/                   # Forked upstream crate (git subtree)
+│   ├── Cargo.toml
+│   ├── src/
+│   ├── tests/
+│   └── docs/
 ├── tests/
 │   ├── test_asfswhid.py        # Unit tests
 │   └── test_conformance.py     # Cross-implementation conformance tests
 └── .github/
     └── workflows/
-        └── ci.yml              # CI: test matrix + wheel builds
+        ├── ci.yml              # CI: test on push/PR
+        └── release.yml         # Build wheels + publish to PyPI on tag
 ```
 
-The Rust side (`src/lib.rs`) is pure glue — it calls into the `swhid` crate's public API and exposes it via PyO3. No cryptographic or hashing code lives here; that's all in the upstream Rust crate.
+The Rust side (`src/lib.rs`) is pure glue — it calls into the `swhid` crate's public API and exposes it via PyO3. No cryptographic or hashing code lives here; that's all in `swhid-rs/`.
+
+The `swhid-rs/` directory is a [git subtree](https://www.atlassian.com/git/tutorials/git-subtree) of the upstream [`swhid/swhid-rs`](https://github.com/swhid/swhid-rs) crate with the gitoxide backend addition. It is consumed via `swhid = { path = "swhid-rs", features = ["gitoxide"] }` in the root `Cargo.toml`.
+
+## Keeping the upstream crate in sync
+
+The `swhid-rs/` directory is managed as a git subtree. To pull in upstream changes:
+
+```bash
+# Pull latest from upstream
+git subtree pull --prefix=swhid-rs \
+    https://github.com/swhid/swhid-rs.git main --squash
+
+# Verify nothing broke
+maturin develop
+pytest tests/ -v
+
+# Push
+git push origin main
+```
+
+If the upstream crate publishes a crates.io release with the gitoxide feature, you can drop the subtree entirely and switch to a version dependency:
+
+```toml
+# In Cargo.toml, replace:
+swhid = { path = "swhid-rs", features = ["gitoxide"] }
+
+# With:
+swhid = { version = "0.3", features = ["gitoxide"] }
+```
+
+Then remove the `swhid-rs/` directory:
+
+```bash
+git rm -r swhid-rs/
+git commit -m "Switch to crates.io swhid release, remove subtree"
+```
 
 ## License
 
