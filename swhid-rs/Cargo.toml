@@ -1,0 +1,34 @@
+[package]
+name = "swhid"
+version = "0.2.2"
+edition = "2021"
+license = "MIT"
+description = "SWHID v1.2 reference implementation - Complete SWHID (ISO/IEC 18670:2025) parsing and hashing with VCS integration"
+repository = "https://github.com/swhid/swhid-rs"
+keywords = ["swhid", "iso18670", "software-heritage", "identifier", "hash"]
+categories = ["encoding", "data-structures", "parsing"]
+
+[features]
+default = []
+serde = ["dep:serde"]
+git = ["dep:git2"]
+gitoxide = ["dep:gix"]
+
+[dependencies]
+hex = "0.4"
+thiserror = "1"
+percent-encoding = "2"
+serde = { version = "1", features = ["derive"], optional = true }
+clap = { version = "4", features = ["derive"] }
+sha1collisiondetection = { version = "0.3" }
+git2 = { version = "0.20", optional = true }
+gix = { version = "0.72", optional = true, default-features = false, features = ["max-performance-safe", "index"] }
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+tempfile = "3"
+assert_fs = "1"
+
+[[bench]]
+name = "swhid_benchmarks"
+harness = false
