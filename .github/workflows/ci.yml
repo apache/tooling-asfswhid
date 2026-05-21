@@ -49,7 +49,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: x86_64-unknown-linux-musl
-          args: --release --out dist
+          args: --release --out dist --find-interpreter
           manylinux: musllinux_1_2
       - uses: actions/upload-artifact@v5
         with:
