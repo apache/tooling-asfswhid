@@ -23,7 +23,7 @@ VCS integration (revision, release, snapshot) uses [gitoxide](https://github.com
 
 ## Installation
 
-### From PyPI (once published)
+### From PyPI
 
 ```bash
 pip install asfswhid
@@ -120,7 +120,7 @@ asfswhid @ git+https://github.com/apache/tooling-asfswhid.git
 Or pin to a specific release tag:
 
 ```
-asfswhid @ git+https://github.com/apache/tooling-asfswhid.git@v0.1.0
+asfswhid @ git+https://github.com/apache/tooling-asfswhid.git@v0.1.1
 ```
 
 Then install with `uv pip install -r requirements.txt` (or `pip install -r requirements.txt`).
@@ -437,22 +437,28 @@ tooling-asfswhid/
 
 The Rust side (`src/lib.rs`) is pure glue — it calls into the `swhid` crate's public API and exposes it via PyO3. No cryptographic or hashing code lives here; that's all in `swhid-rs/`.
 
-The `swhid-rs/` directory is a [git subtree](https://www.atlassian.com/git/tutorials/git-subtree) of the upstream [`swhid/swhid-rs`](https://github.com/swhid/swhid-rs) crate with the gitoxide backend addition. It is consumed via `swhid = { path = "swhid-rs", features = ["gitoxide"] }` in the root `Cargo.toml`.
+The `swhid-rs/` directory contains a copy of the upstream [`swhid/swhid-rs`](https://github.com/swhid/swhid-rs) crate with the gitoxide backend addition. It is consumed via `swhid = { path = "swhid-rs", features = ["gitoxide"] }` in the root `Cargo.toml`.
 
 ## Keeping the upstream crate in sync
 
-The `swhid-rs/` directory is managed as a git subtree. To pull in upstream changes:
+The `swhid-rs/` directory contains a copy of the upstream [`swhid/swhid-rs`](https://github.com/swhid/swhid-rs) crate with the gitoxide backend addition. To sync with upstream:
 
 ```bash
-# Pull latest from upstream
-git subtree pull --prefix=swhid-rs \
-    https://github.com/swhid/swhid-rs.git main --squash
+# Clone upstream into a temp directory
+git clone https://github.com/swhid/swhid-rs.git /tmp/swhid-rs-upstream
+rm -rf /tmp/swhid-rs-upstream/.git /tmp/swhid-rs-upstream/.github
+
+# Replace local copy
+rm -rf swhid-rs/
+cp -r /tmp/swhid-rs-upstream swhid-rs/
 
 # Verify nothing broke
 maturin develop
 pytest tests/ -v
 
-# Push
+# Commit and push
+git add swhid-rs/
+git commit -m "Sync swhid-rs with upstream main"
 git push origin main
 ```
 
